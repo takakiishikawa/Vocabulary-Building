@@ -2,6 +2,9 @@
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\AdminArticleController;
+use App\Http\Controllers\AdminWordController;
+
 
 /*
 |--------------------------------------------------------------------------
@@ -17,3 +20,9 @@ use Illuminate\Support\Facades\Route;
 Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });
+
+//admin article
+Route::get('/article',[AdminArticleController::class,'index']);
+
+//admin word
+Route::get('/word',[AdminWordController::class,'index']);

@@ -9,13 +9,12 @@ use App\Models\Technology;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Http;
 
-class WordController extends Controller
+class AdminArticleController extends Controller
 {
     public function index()
     {
         //記事の生成
         $wordList = Word::orderBy('id','asc')->take(50)->pluck('name')->toArray();
-        $grammarList = Grammar::pluck('name')->toArray();
         $selectedGrammar = Grammar::inRandomOrder()->first()->name;
         $selectedTechnology = Technology::inRandomOrder()->first()->name;
 
@@ -31,6 +30,7 @@ class WordController extends Controller
             1.英語の記事
             2.使用した英単語10個
 
+
             json形式の期待する構造
             \"article\": \"値\",
             \"selectedWords\": \"値\"
@@ -43,7 +43,7 @@ class WordController extends Controller
             'Content-Type' => 'application/json',
             'Authorization' => 'Bearer ' . env('OPENAI_API_KEY')
         ])->withOptions(['timeout' => 60])->post($url, [
-            'model' => 'gpt-3.5-turbo',
+            'model' => 'gpt-4',
             'messages' => [
                 ['role' => 'user', 'content' => $prompt]
             ],
@@ -55,7 +55,7 @@ class WordController extends Controller
         $output = $response->json();
         Log::info('choices text:', ["text"=>$output['choices'][0]['message']['content']]);
 
-        $json = json_decode($output['choices'][0]['message']['content']  , true  );
+        $x1 = json_decode($output['choices'][0]['message']['content']  , true  );
         $articleContent = $x1['article'];
         $selectedWords = $x1['selectedWords'];
         Log::info('selectedWords:', ["selectedWords"=>$selectedWords]);
@@ -69,13 +69,13 @@ class WordController extends Controller
         grammar_explanation
         英語の記事を丁寧に精読します。そのために、英語の記事に対する文法解説をお願いします。一つの英文ごとに①使用されている文法 ②その文法の解説 を日本語で提供してください。
         
-        jp_translation
+        article_jp
         英語の記事の日本語訳を作成してください。
         
         json形式の期待する構造
             \"article\": \"$articleContent\",
             \"grammar_explanation\": \"値\",
-            \"jp_translation\": \"値\"
+            \"article_jp\": \"値\"
         ";
         
         Log::debug("log",["prompt"=>$prompt2]);
@@ -85,7 +85,7 @@ class WordController extends Controller
             'Content-Type' => 'application/json',
             'Authorization' => 'Bearer ' . env('OPENAI_API_KEY')
         ])->withOptions(['timeout' => 60])->post($url2, [
-            'model' => 'gpt-3.5-turbo',
+            'model' => 'gpt-4',
             'messages' => [
                 ['role' => 'user', 'content' => $prompt2]
             ],
@@ -101,7 +101,8 @@ class WordController extends Controller
         Log::info('x2:', ["x2"=>$x2]);
 
         $grammarExplanation = $x2['grammar_explanation'];
-        $jpTranslation = $x2['jp_translation'];
+        Log::info('grammarExplanation:', ["grammarExplanation"=>$grammarExplanation]);
+        $jpTranslation = $x2['article_jp'];
 
         return response()->json([
             'wordList' => $wordList,
@@ -110,7 +111,7 @@ class WordController extends Controller
             'selectedGrammar' => $selectedGrammar,
             'selectedTechnology' => $selectedTechnology,
             'grammarExplanation' => $grammarExplanation,
-            'jpTranslation' => $jpTranslation
+            'article_jp' => $article_jp
         ]);
     }
 }
