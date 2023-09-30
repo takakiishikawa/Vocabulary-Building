@@ -7,8 +7,32 @@ const App: React.VFC = () => {
         webTechName?: string;
         grammarExplanation?: string;
         wordList?: string[];
+        jpTranslation?: string;
+        selectedWords?: string[];
+        selectedGrammar?: string;
+        selectedTechnology?: string;
+        disruptionIntonation?: string;
+        droppingWordPhrase?: string;
     }>({});
 
+    //ボタンを押下すると、laravelにAPIを送るコードを実行してください
+    const sendWords = () => {
+        const url = "http://xxxxxx";
+        const data = {
+            article: words.article,
+            webTechName: words.webTechName,
+            grammarExplanation: words.grammarExplanation,
+            wordList: words.wordList,
+            jpTranslation: words.jpTranslation,
+            selectedWords: words.selectedWords,
+            selectedGrammar: words.selectedGrammar,
+            selectedTechnology: words.selectedTechnology,
+            disruptionIntonation: words.disruptionIntonation,
+            droppingWordPhrase: words.droppingWordPhrase,
+        };
+    };
+
+    // Fetches words from the API, and stores them in the component state.s
     useEffect(() => {
         fetch("http://127.0.0.1:8000/word")
             .then((response) => {
@@ -35,14 +59,24 @@ const App: React.VFC = () => {
                         {index + 1}. {word}
                     </li>
                 ))}
+            <div style={{ fontSize: "50px" }}>selectedWords</div>
+            {words.selectedWords &&
+                words.selectedWords.map((selectedWord, index) => (
+                    <li key={index}>
+                        {index + 1}. {selectedWord}
+                    </li>
+                ))}
 
-            {console.log(words)}
             <div style={{ fontSize: "50px" }}>article</div>
             {words.article}
-            <div style={{ fontSize: "50px" }}>webTechName</div>
-            {words.webTechName}
             <div style={{ fontSize: "50px" }}>grammarExplanation</div>
             {words.grammarExplanation}
+            <div style={{ fontSize: "50px" }}>jpTranslation</div>
+            {words.jpTranslation}
+            <div style={{ fontSize: "50px" }}>selectedGrammar</div>
+            {words.selectedGrammar}
+            <div style={{ fontSize: "50px" }}>selectedTechnology</div>
+            {words.selectedTechnology}
         </div>
     );
 };
