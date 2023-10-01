@@ -21,7 +21,11 @@ const Article: React.FC = () => {
         })
             .then((res) => res.json())
             .then((data) => {
-                console.log(data);
+                if (data.message) {
+                    alert(data.message);
+                } else if (data.error) {
+                    alert(data.error);
+                }
             });
     };
 

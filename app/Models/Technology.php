@@ -12,4 +12,9 @@ class Technology extends Model
     protected $fillable=[
         'name'
     ];
+
+    public function technologies()
+    {
+        return $this->hasMany(Article::class);
+    }
 }

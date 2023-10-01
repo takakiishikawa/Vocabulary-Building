@@ -21,7 +21,11 @@ const Word: React.FC = () => {
         })
             .then((res) => res.json())
             .then((data) => {
-                console.log(data);
+                if (data.message) {
+                    alert(data.message);
+                } else if (data.error) {
+                    alert(data.error);
+                }
             });
     };
 
@@ -39,7 +43,7 @@ const Word: React.FC = () => {
                               {index + 1}.{wordKey}
                           </li>
                           <li>core_meaning: {wordData.core_meaning}</li>
-                          <li>imegenary: {wordData.imegenary}</li>
+                          <li>imagery: {wordData.imagery}</li>
                           <li>word_jp: {wordData.word_jp}</li>
                           <li>parse: {wordData.parse}</li>
                       </ul>

@@ -14,7 +14,8 @@ class Word extends Model
         'frequency',
         'parse',
         'imagery',
-        'jp_word',
+        'core_meaning',
+        'word_jp',
         'initial_test_result',
         'word_practice_result',
         'cumulative_incorrect_count'

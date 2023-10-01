@@ -23,6 +23,8 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 
 //admin article
 Route::get('/article',[AdminArticleController::class,'index']);
+Route::post('/article/save',[AdminArticleController::class,'save']);
 
 //admin word
 Route::get('/word',[AdminWordController::class,'index']);
+Route::post('/word/save',[AdminWordController::class,'save']);
