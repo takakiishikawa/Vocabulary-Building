@@ -11,17 +11,18 @@ class AdminWordController extends Controller
 {
     public function index(){
         //記事の生成
+        $start_time = microtime(true);
         $wordList = Word::whereNull('parse')->orderBy('id','asc')->take(20)->pluck('name')->toArray();
 
-        $prompt = "英語教材用に、以下の情報を持つ英単語20個のデータが必要です。json 形式で返答お願いします。
+        $prompt = "英語教材用に、以下の情報を持つ英単語20個のデータが必要です。json 形式のみ返答お願いします。
         
         1. 英単語20個のリスト". implode(", ", $wordList) ."
         2. core_meaning: 英語初学者向けに、その英単語のコアとなる、本質的な意味を日本語の文章で詳しく解説してください
         3. imagery: 英語初学者向けに、その英単語が持つイメージをあなたの豊富な語彙を駆使して、日本語でわかりやすく私に伝えてください。例 恥ずかしがったり、緊張したりしたときの顔が赤くなる人
-        4. word_jp: 英単語の基本的な(コアとなる)日本語訳（一語） 例 boxならば、箱
-        5. parse: その英単語の品詞（英語一語）
+        4. word_jp: 英単語の基本的な日本語訳を1単語で記載 例 boxならば、箱
+        5. parse: その英単語の品詞を英単語1単語で記載 例 名詞ならば、norn
 
-        json形式の構造:
+        jsonの形式は以下の通りです:
             \"word1\": {\"core_meaning\": \"値\", \"imagery\": \"値\", \"word_jp\": \"値\", \"parse\": \"値\"}
             \"word2\": {\"core_meaning\": \"値\", \"imagery\": \"値\", \"word_jp\": \"値\", \"parse\": \"値\"}
             \"word...\": {\"core_meaning\": \"値\", \"imagery\": \"値\", \"word_jp\": \"値\", \"parse\": \"値\"}
@@ -33,7 +34,7 @@ class AdminWordController extends Controller
         $response = Http::withHeaders([
             'Content-Type' => 'application/json',
             'Authorization' => 'Bearer ' . env('OPENAI_API_KEY')
-        ])->withOptions(['timeout' => 120])->post($url, [
+        ])->withOptions(['timeout' => 200])->post($url, [
             'model' => 'gpt-4',
             'messages' => [
                 ['role' => 'user', 'content' => $prompt]
@@ -49,8 +50,13 @@ class AdminWordController extends Controller
         $wordGptData = json_decode($output['choices'][0]['message']['content']  , true  );
         Log::info('wordGptData:', ["wordGptData"=>$wordGptData]);
 
+        $end_time = microtime(true);
+        $time = floor($end_time - $start_time);
+
+
         return response()->json([
-            'wordGptData' => $wordGptData
+            'wordGptData' => $wordGptData,
+            'message' => 'Word created successfully! response time is ' . $time . ' seconds.',
         ]);
     }
         
@@ -73,7 +79,7 @@ class AdminWordController extends Controller
             }
             
             return response()->json([
-                'message' => 'Word created successfully',
+                'message' => 'Word created successfully!',
             ], 201);
         } catch (\Exception $e) {
             Log::error("Error saving words: " . $e->getMessage());

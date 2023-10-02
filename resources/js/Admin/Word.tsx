@@ -8,6 +8,7 @@ const Word: React.FC = () => {
             .then((res) => res.json())
             .then((data) => {
                 setWords(data.wordGptData);
+                alert(data.message);
             });
     };
 
@@ -32,7 +33,7 @@ const Word: React.FC = () => {
     return (
         <div>
             <div>
-                <button onClick={fetchWord}>Generate word In Chat GPT</button>
+                <button onClick={fetchWord}>Generate Word In Chat GPT</button>
             </div>
             {console.log(words)}
             {Object.keys(words).length === 0

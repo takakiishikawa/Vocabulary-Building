@@ -8,6 +8,7 @@ const Article: React.FC = () => {
             .then((res) => res.json())
             .then((data) => {
                 setArticle(data);
+                alert(data.message);
             });
     };
 

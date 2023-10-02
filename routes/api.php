@@ -28,3 +28,7 @@ Route::post('/article/save',[AdminArticleController::class,'save']);
 //admin word
 Route::get('/word',[AdminWordController::class,'index']);
 Route::post('/word/save',[AdminWordController::class,'save']);
+
+//admin technology
+Route::get('/technology',[AdminTechnologyController::class,'index']);
+Route::post('/technology/save',[AdminTechnologyController::class,'save']);
