@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Word;
+use App\Models\WordTest;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Http\Request;
@@ -53,39 +54,53 @@ class AdminWordController extends Controller
         $end_time = microtime(true);
         $time = floor($end_time - $start_time);
 
+        //プロセス処理記載
+
+
+
+
+        //WordTestへ保存
+        foreach($wordGptData as $wordName => $wordDetail){
+            $wordTest = new WordTest();
+            $wordTest->name = $wordName;
+            $wordTest->core_meaning = $wordDetail['core_meaning'];
+            $wordTest->imagery = $wordDetail['imagery'];
+            $wordTest->word_jp = $wordDetail['word_jp'];
+            $wordTest->parse = $wordDetail['parse'];
+            $wordTest->save_flag = 0;
+            $wordTest->save();
+        }
+
+        //save_flagが0のものを取得
+        $wordTestList = WordTest::where('save_flag', 0)->get();
+        Log::info('wordTestList:', ["wordTestList"=>$wordTestList]);
 
         return response()->json([
-            'wordGptData' => $wordGptData,
+            'wordTestList' => $wordTestList,
             'message' => 'Word created successfully! response time is ' . $time . ' seconds.',
         ]);
     }
         
-    public function save(Request $request){
-        try {
-            $words = $request->all();
-            Log::info('word:', ["words"=>$words]);
-
-            //wordsには、20個のword
-            //wordには、各カラムのデータが格納
-            //wordデータは既にDB登録ずみ
-            //wordのnameが一致するレコードを探し、そのレコードに対して、parseなどのプロパティを登録する
-            foreach($words as $wordName => $wordDetail){
-                $wordModel = Word::where('name', $wordName)->first();
-                $wordModel->core_meaning = $wordDetail['core_meaning'];
-                $wordModel->imagery = $wordDetail['imagery'];
-                $wordModel->word_jp = $wordDetail['word_jp'];
-                $wordModel->parse = $wordDetail['parse'];
-                $wordModel->save();
+    public function save(){
+        //wordTestListのsave_flagが0である英単語を取得
+        //wordTableに登録
+        //登録後、wordTestListのsave_flagを1に変更する処理
+        $wordTestList = WordTest::where('save_flag', 0)->get();
+        Log::info('wordTestList:', ["wordTestList"=>$wordTestList]);
+        foreach($wordTestList as $wordTest){
+            $word = Word::where('name', $wordTest->name)->first();
+            if($word){
+                $word->core_meaning = $wordTest->core_meaning;
+                $word->imagery = $wordTest->imagery;
+                $word->word_jp = $wordTest->word_jp;
+                $word->parse = $wordTest->parse;
+                $word->save();
             }
-            
-            return response()->json([
-                'message' => 'Word created successfully!',
-            ], 201);
-        } catch (\Exception $e) {
-            Log::error("Error saving words: " . $e->getMessage());
-            return response()->json([
-                'error' => 'Word created failed',
-            ], 500);
+            $wordTest->save_flag = 1;
+            $wordTest->save();
         }
+        return response()->json([
+            'message' => 'Word saved successfully!',
+        ]);
     }
 }

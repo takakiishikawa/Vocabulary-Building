@@ -9,13 +9,13 @@ const AdminTop: React.FC = () => {
         <div>
             <ul>
                 <li>
-                    <Link to="/admin/article">Article</Link>
+                    <Link to="/admin/article">Confirm Article Test</Link>
                 </li>
                 <li>
-                    <Link to="/admin/word">Word</Link>
+                    <Link to="/admin/word">Confirm Word Test</Link>
                 </li>
                 <li>
-                    <Link to="/admin/technology">Technology</Link>
+                    <Link to="/admin/technology">Go To Technology Tags</Link>
                 </li>
             </ul>
 

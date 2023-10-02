@@ -9,6 +9,8 @@ use App\Models\Grammar;
 use App\Models\Technology;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Http;
+use App\Models\ArticleTestWordGrouping;
+use App\Models\ArticleTestGenerate;
 
 class AdminArticleController extends Controller
 {
@@ -16,7 +18,34 @@ class AdminArticleController extends Controller
     {
         //記事の生成
         $start_time = microtime(true);
-        $wordList = Word::whereNull('generated_id')->orderBy('id','asc')->take(50)->pluck('name')->toArray();
+
+        // ArticleTestWordGroupingに保存する
+        $groupCounter = 1;
+        $wordCount = 50;
+        $groupCount = 3;
+        $totalCount = $wordCount * $groupCount;
+        $wordList = Word::whereNull('generated_id')->orderBy('id', 'asc')->take($totalCount)->pluck('name')->toArray();
+
+        for ($i = 0; $i < $groupCount; $i++) {
+            $slice = array_slice($wordList, $i * $wordCount, $wordCount);
+            foreach ($slice as $word) {
+                $wordGrouping = new ArticleTestWordGrouping();
+                $wordGrouping->word_test_group = $groupCounter;
+                $wordGrouping->name = $word->name;
+                $wordGrouping->article_test_id = 0;
+                $wordGrouping->save_flag = 0;
+                $wordGrouping->save();
+            }
+            $groupCounter++;
+        }
+
+        // ArticleTestGenerateに保存する
+        $articleTestGenerate = new ArticleTestGenerate();
+        $articleTestGenerate->save_flag = 0;
+
+        //以下、プロセスを分けてAPIをコールする
+        
+
         $selectedGrammar = Grammar::inRandomOrder()->first()->name;
         $selectedTechnology = Technology::inRandomOrder()->first()->name;
 
@@ -27,15 +56,11 @@ class AdminArticleController extends Controller
         - 記事の文字数は500文字以内にしてください。
         - 記事のテーマは " . $selectedTechnology . " としてください。
     
-        作成した記事の内容と、選んだ10個の英単語をjson形式で返してください。返すデータは以下の通りです。
-        1. article: 作成した英語の記事内容
-        2. selectedWords: 使用された10個の英単語
+        下記をjson形式で返してください。
+        article: 作成した英語の記事内容
     
         jsonの形式は以下の通りです:
-        \"article\": \"値\",
-        \"selectedWords\": [\"単語1\", \"単語2\", \"単語3\", \"単語4\", \"単語5\", \"単語6\", \"単語7\", \"単語8\", \"単語9\", \"単語10\"]
-        
-        ※注意: selectedWordsに含まれる10の単語は、全て提供された50の単語リストと一致している必要があります。また、10の単語数は11以上でも9以下でもいけません。";
+        \"article\": \"値\" ";
         
         Log::debug("log",["prompt"=>$prompt]);
         $url = "https://api.openai.com/v1/chat/completions";

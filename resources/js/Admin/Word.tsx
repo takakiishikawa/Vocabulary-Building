@@ -1,13 +1,22 @@
 import React, { useState } from "react";
 
+interface WordData {
+    id: number;
+    word: string;
+    core_meaning: string;
+    imagery: string;
+    word_jp: string;
+    parse: string;
+}
+
 const Word: React.FC = () => {
-    const [words, setWords] = useState<Record<string, any>>({});
+    const [wordTestList, setWordTestList] = useState<WordData[]>([]);
 
     const fetchWord = () => {
         fetch("http://127.0.0.1:8000/api/word")
             .then((res) => res.json())
             .then((data) => {
-                setWords(data.wordGptData);
+                setWordTestList(data.wordTestList);
                 alert(data.message);
             });
     };
@@ -18,7 +27,7 @@ const Word: React.FC = () => {
             headers: {
                 "Content-Type": "application/json",
             },
-            body: JSON.stringify(words),
+            body: JSON.stringify(wordTestList),
         })
             .then((res) => res.json())
             .then((data) => {
@@ -35,22 +44,22 @@ const Word: React.FC = () => {
             <div>
                 <button onClick={fetchWord}>Generate Word In Chat GPT</button>
             </div>
-            {console.log(words)}
-            {Object.keys(words).length === 0
+            {Object.keys(wordTestList).length === 0
                 ? null
-                : Object.entries(words).map(([wordKey, wordData], index) => (
+                : wordTestList.map((wordData: any, index: number) => (
                       <ul key={index}>
-                          <li>
-                              {index + 1}.{wordKey}
-                          </li>
-                          <li>core_meaning: {wordData.core_meaning}</li>
-                          <li>imagery: {wordData.imagery}</li>
-                          <li>word_jp: {wordData.word_jp}</li>
-                          <li>parse: {wordData.parse}</li>
+                          <li>{wordData.id}</li>
+                          <ul>
+                              <li>{wordData.word}</li>
+                              <li>{wordData.core_meaning}</li>
+                              <li>{wordData.imagery}</li>
+                              <li>{wordData.word_jp}</li>
+                              <li>{wordData.parse}</li>
+                          </ul>
                       </ul>
                   ))}
             <div>
-                <button onClick={saveWord}>Save To DB</button>
+                <button onClick={saveWord}>Save To Production DB</button>
             </div>
         </div>
     );
