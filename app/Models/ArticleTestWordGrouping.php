@@ -10,7 +10,7 @@ class ArticleTestWordGrouping extends Model
     use HasFactory;
 
     protected $fillable = [
-        'article_test_id',
+        'article_test_generate_id',
         'name',
         'word_test_group',
         'save_flag',

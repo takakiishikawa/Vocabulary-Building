@@ -1,24 +1,34 @@
 import React, { useState } from "react";
 
-const Article: React.FC = () => {
-    const [article, setArticle] = useState<any>({});
+interface ArticleDate {
+    id: number;
+    grammar_id: number;
+    technology_id: number;
+    article: string;
+    article_jp: string;
+    grammar_explanation: string;
+    word_frequency_average: number;
+}
 
-    const fetchArticle = () => {
+const ArticleList: React.FC = () => {
+    const [articleList, setArticleList] = useState<ArticleDate[]>([]);
+
+    const fetchArticleList = () => {
         fetch("http://127.0.0.1:8000/api/article")
             .then((res) => res.json())
             .then((data) => {
-                setArticle(data);
+                setArticleList(data);
                 alert(data.message);
             });
     };
 
-    const saveArticle = () => {
+    const saveArticleList = () => {
         fetch("http://127.0.0.1:8000/api/article/save", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
             },
-            body: JSON.stringify(article),
+            body: JSON.stringify(articleList),
         })
             .then((res) => res.json())
             .then((data) => {
@@ -33,46 +43,30 @@ const Article: React.FC = () => {
     return (
         <div>
             <div>
-                <button onClick={fetchArticle}>
-                    Generate article In Chat GPT
+                <button onClick={fetchArticleList}>
+                    Generate articleList In Chat GPT
                 </button>
             </div>
-            {console.log(article)}
-            {Object.keys(article).length === 0 ? null : (
-                <div>
-                    <div style={{ fontSize: "50px" }}>Word List</div>
-                    {article.wordList &&
-                        article.wordList.map((word: string, index: number) => (
-                            <li key={index}>
-                                {index + 1}. {word}
-                            </li>
-                        ))}
-                    <div style={{ fontSize: "50px" }}>Selected Words</div>
-                    {article.selectedWords &&
-                        article.selectedWords.map(
-                            (selectedWord: string, index: number) => (
-                                <li key={index}>
-                                    {index + 1}. {selectedWord}
-                                </li>
-                            )
-                        )}
-                    <div style={{ fontSize: "50px" }}>article</div>
-                    {article.article}
-                    <div style={{ fontSize: "50px" }}>Grammar Explanation</div>
-                    {article.grammarExplanation}
-                    <div style={{ fontSize: "50px" }}>Article JP</div>
-                    {article.article_jp}
-                    <div style={{ fontSize: "50px" }}>Grammar Tag</div>
-                    {article.selectedGrammar}
-                    <div style={{ fontSize: "50px" }}>Technology Tag</div>
-                    {article.selectedTechnology}
-                </div>
-            )}
+            {Object.keys(articleList).length === 0
+                ? null
+                : articleList.map((articleData: any, index: number) => (
+                      <ul key={index}>
+                          <li>{articleData.id}</li>
+                          <ul>
+                              <li>{articleData.grammar_id}</li>
+                              <li>{articleData.technology_id}</li>
+                              <li>{articleData.article}</li>
+                              <li>{articleData.article_jp}</li>
+                              <li>{articleData.grammar_explanation}</li>
+                              <li>{articleData.word_frequency_average}</li>
+                          </ul>
+                      </ul>
+                  ))}
             <div>
-                <button onClick={saveArticle}>Save To DB</button>
+                <button onClick={saveArticleList}>Save To DB</button>
             </div>
         </div>
     );
 };
 
-export default Article;
+export default ArticleList;
