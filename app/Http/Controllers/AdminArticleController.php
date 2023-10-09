@@ -22,18 +22,20 @@ class AdminArticleController extends Controller
         // ArticleTestWordGroupingに保存する
         $groupCounter = 1;
         $wordCount = 50;
-        $groupCount = 3;
+        $groupCount = 2;
         $totalCount = $wordCount * $groupCount;
         $wordList = Word::whereNull('generated_id')->orderBy('id', 'asc')->take($totalCount)->pluck('name')->toArray();
+        Log::info('wordList:', ["wordList"=>$wordList]);
 
         for ($i = 0; $i < $groupCount; $i++) {
             $slice = array_slice($wordList, $i * $wordCount, $wordCount);
             foreach ($slice as $word) {
                 $wordGrouping = new ArticleTestWordGrouping();
                 $wordGrouping->word_test_group = $groupCounter;
-                $wordGrouping->name = $word->name;
+                $wordGrouping->name = $word;
                 $wordGrouping->article_test_generate_id = 0;
                 $wordGrouping->save_flag = 0;
+                Log::info('wordGrouping:', ["wordGrouping"=>$wordGrouping]);
                 $wordGrouping->save();
             }
             $groupCounter++;
@@ -44,8 +46,9 @@ class AdminArticleController extends Controller
 
 
         //aricleTestWordGroupingのaritcle_test_id毎にpropmtを作成する
-        $articleTestWordGrouping = ArticleTestWordGrouping::where('save_flag', 0)->get();
-        $articleTestWordGroupingGroupBy = $articleTestWordGrouping->groupBy('article_test_generate_id');
+        //nameとword_test_groupのみを取得する
+        $articleTestWordGrouping = ArticleTestWordGrouping::where('save_flag', 0)->get(['name', 'word_test_group']);
+        $articleTestWordGroupingGroupBy = $articleTestWordGrouping->groupBy('word_test_group');
         Log::info('articleTestWordGroupingGroupBy:', ["articleTestWordGroupingGroupBy"=>$articleTestWordGroupingGroupBy]);
         $articleTestWordGroupingGroupByArray = $articleTestWordGroupingGroupBy->toArray();
         Log::info('articleTestWordGroupingGroupByArray:', ["articleTestWordGroupingGroupByArray"=>$articleTestWordGroupingGroupByArray]);
@@ -53,22 +56,23 @@ class AdminArticleController extends Controller
         $selectedGrammar = Grammar::inRandomOrder()->first()->name;
         $selectedTechnology = Technology::inRandomOrder()->first()->name;
         
-        foreach($articleTestWordGroupingGroupByArray as $articleTestWordGroupingGroupBy){
+        foreach($articleTestWordGroupingGroupByArray as $n){
+            Log::info('n:', ["n"=>$n]);
             //articleTestWordGroupingGroupByArrayのname50個を取得してプロンプトにWordListとして入れる
-            $wordList = array_column($articleTestWordGroupingGroupBy, 'name');
+            $wordList = array_column($n, 'name');
+            Log::info('wordList:', ["wordList"=>$wordList]);
 
-            $prompt = "以下の指定に従って、自然な英語の記事を作成してください。
-            - 使用する英語の文は、特定の文法（" . $selectedGrammar . "）を使用してください。
-            - 使用する単語や文法は、日本の中学生レベルまたはそれ以下で理解可能なものに限定してください。
+            $prompt = "以下の条件に基づいて、自然な英語の記事を作成してください：
+            - 文法: 使用する文は、特定の文法（" . $selectedGrammar . "）を使用してください。
+            - レベル: 使用する単語や文法は、日本の中学生レベルまたはそれ以下で理解できるものにしてください。
             - 以下の提供される50個の英単語の中から厳密に10個を選び、記事内で使用してください。選ばれた10の単語はすべてこの50の単語の中に存在している必要があります。使用可能な単語リスト: " . implode(", ", $wordList) . "。
-            - 記事の文字数は500文字以内にしてください。
-            - 記事のテーマは " . $selectedTechnology . " としてください。
-        
-            下記をjson形式で返してください。
-            article: 作成した英語の記事内容
-        
-            jsonの形式は以下の通りです:
-            \"article\": \"値\" ";
+            - 文字数制限: 記事は500文字以内にしてください。
+            - テーマ: 記事のテーマは " . $selectedTechnology . " としてください。
+
+            作成した記事の内容を以下のJSON形式で返してください:
+            {
+            \"article\": \"[あなたの記事内容]\"
+            }";
             
             Log::debug("log",["prompt"=>$prompt]);
             $url = "https://api.openai.com/v1/chat/completions";
@@ -88,30 +92,31 @@ class AdminArticleController extends Controller
 
             $output = $response->json();
             Log::info('full output',['output'=>$output]);
+            Log::info('content', ["content"=>$output['choices'][0]['message']['content']]);
 
-            $x1 = json_decode($output['choices'][0]['message']['content']  , true  );
+            $cleanedContent = preg_replace('/[\x00-\x1F\x7F]/u', '', $output['choices'][0]['message']['content']);
+            $x1 = json_decode($cleanedContent, true);
+            if (json_last_error() !== JSON_ERROR_NONE) {
+                Log::error('JSON decode error:', ["error" => json_last_error_msg()]);
+            }
             Log::info('x1:', ["x1"=>$x1]);
             $article = $x1['article'];
 
             //$articleには、articleTestWordGroupingGroupByのnameが10個入っているか確認する
             //その10個を配列として取得する
-            $articleWordArray = explode(" ", $article);
+            $articleWordArray = preg_split('/[\s,\.]+/', $article, -1, PREG_SPLIT_NO_EMPTY);
             Log::info('articleWordArray:', ["articleWordArray"=>$articleWordArray]);
+            Log::info('wordList:', ["wordList"=>$wordList]);
             $articleArrayDiff = array_intersect($articleWordArray, $wordList);
             Log::info('articleArrayDiff:', ["articleArrayDiff"=>$articleArrayDiff]);
-
-            //11個以上、9個以下の場合、エラーを返す
-            if(count($articleArrayDiff) != 10){
-                return response()->json([
-                    'error' => 'article must be 10 words.'
-                ], 500);
-            }
 
             //articleTestGenerateのレコードを新規作成し、各カラムを保存する
             $artcileTestGerate = new ArticleTestGenerate();
             $artcileTestGerate->grammar_id = Grammar::where('name', $selectedGrammar)->first()->id;
             $artcileTestGerate->technology_id = Technology::where('name', $selectedTechnology)->first()->id;
             $artcileTestGerate->article = $article;
+            $artcileTestGerate->save_flag = 0;
+            Log::info('artcileTestGerate:', ["artcileTestGerate"=>$artcileTestGerate]);
             $artcileTestGerate->save();
 
             foreach($articleArrayDiff as $articleArrayDiffWord){
@@ -130,13 +135,15 @@ class AdminArticleController extends Controller
             }
             $wordFrequencyAverage = array_sum($wordFrequencyArray) / count($wordFrequencyArray);
             $artcileTestGerate->word_frequency_average = $wordFrequencyAverage;
+            Log::info('artcileTestGerate:', ["artcileTestGerate"=>$artcileTestGerate]);
+            $artcileTestGerate->save();
         }
 
         $articleTestWordGrouping->save_flag = 1;
 
         //articleTestGenerateでarticle_jpがnullのレコードを全て取得する
         $articleTestGenerateArray = ArticleTestGenerate::whereNull('article_jp')->get();
-        Log::info('articleTestGenerate:', ["articleTestGenerate"=>$articleTestGenerate]);
+        Log::info('articleTestGenerateArray:', ["articleTestGenerateArray"=>$articleTestGenerateArray]);
 
         //articleTestGenerateArrayのarticleを取得する
         //そのarticleを使用し、プロンプトを実行する
@@ -186,6 +193,7 @@ class AdminArticleController extends Controller
             $grammarExplanation = $x2['grammar_explanation'];
             Log::info('grammarExplanation:', ["grammarExplanation"=>$grammarExplanation]);
             $article_jp = $x2['article_jp'];
+            Log::info('article_jp:', ["article_jp"=>$article_jp]);
 
             $articleTestGenerate->grammar_explanation = $grammarExplanation;
             $articleTestGenerate->article_jp = $article_jp;
@@ -207,11 +215,11 @@ class AdminArticleController extends Controller
 
     public function save(){
         //articleTestGenerateのsave_flagが0であるレコードを全て取得
-        $articleTestGenerate = ArticleTestGenerate::where('save_flag', 0)->get();
-        Log::info('articleTestGenerate:', ["articleTestGenerate"=>$articleTestGenerate]);
+        $articleTestGenerateList = ArticleTestGenerate::where('save_flag', 0)->get();
+        Log::info('articleTestGenerateList:', ["articleTestGenerateList"=>$articleTestGenerateList]);
 
         //Article Tableに全てのデータをsaveする
-        foreach($articleTestGenerate as $articleTestGenerate){
+        foreach($articleTestGenerateList as $articleTestGenerate){
             $article = new Article();
             $article->grammar_id = $articleTestGenerate->grammar_id;
             $article->technology_id = $articleTestGenerate->technology_id;
@@ -223,7 +231,8 @@ class AdminArticleController extends Controller
         }
         //登録後、articleTestGenerateのsave_flagを1に変更する処理
         $articleTestGenerate->save_flag = 1;
-
+        $articleTestGenerate->save();
+        
         return response()->json([
             'message' => 'Article created successfully!'
         ]);

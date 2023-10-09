@@ -14,6 +14,7 @@ class AdminWordController extends Controller
         //記事の生成
         $start_time = microtime(true);
         $wordList = Word::whereNull('parse')->orderBy('id','asc')->take(20)->pluck('name')->toArray();
+        Log::info('wordList:', ["wordList"=>$wordList]);
 
         $prompt = "英語教材用に、以下の情報を持つ英単語20個のデータが必要です。json 形式のみ返答お願いします。
         

@@ -2,7 +2,7 @@ import React, { useState } from "react";
 
 interface WordData {
     id: number;
-    word: string;
+    name: string;
     core_meaning: string;
     imagery: string;
     word_jp: string;
@@ -11,6 +11,7 @@ interface WordData {
 
 const Word: React.FC = () => {
     const [wordTestList, setWordTestList] = useState<WordData[]>([]);
+    console.log("wordTestList", wordTestList);
 
     const fetchWord = () => {
         fetch("http://127.0.0.1:8000/api/word")
@@ -33,8 +34,6 @@ const Word: React.FC = () => {
             .then((data) => {
                 if (data.message) {
                     alert(data.message);
-                } else if (data.error) {
-                    alert(data.error);
                 }
             });
     };
@@ -44,13 +43,14 @@ const Word: React.FC = () => {
             <div>
                 <button onClick={fetchWord}>Generate Word In Chat GPT</button>
             </div>
+            <h2>WordTestData</h2>
             {Object.keys(wordTestList).length === 0
                 ? null
                 : wordTestList.map((wordData: any, index: number) => (
                       <ul key={index}>
                           <li>{wordData.id}</li>
                           <ul>
-                              <li>{wordData.word}</li>
+                              <li>{wordData.name}</li>
                               <li>{wordData.core_meaning}</li>
                               <li>{wordData.imagery}</li>
                               <li>{wordData.word_jp}</li>

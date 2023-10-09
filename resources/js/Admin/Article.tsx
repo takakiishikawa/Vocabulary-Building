@@ -17,8 +17,15 @@ const ArticleList: React.FC = () => {
         fetch("http://127.0.0.1:8000/api/article")
             .then((res) => res.json())
             .then((data) => {
-                setArticleList(data);
-                alert(data.message);
+                console.log(data);
+                if (data.articleTestGenerate) {
+                    setArticleList(data.articleTestGenerate);
+                }
+                if (data.message) {
+                    alert(data.message);
+                } else if (data.error) {
+                    alert(data.error);
+                }
             });
     };
 
@@ -34,8 +41,6 @@ const ArticleList: React.FC = () => {
             .then((data) => {
                 if (data.message) {
                     alert(data.message);
-                } else if (data.error) {
-                    alert(data.error);
                 }
             });
     };
