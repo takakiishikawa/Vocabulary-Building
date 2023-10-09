@@ -10,7 +10,7 @@ use Illuminate\Http\Request;
 
 class AdminWordController extends Controller
 {
-    public function index(){
+    public function generate(){
         //記事の生成
         $start_time = microtime(true);
         $wordList = Word::whereNull('parse')->orderBy('id','asc')->take(20)->pluck('name')->toArray();
@@ -81,6 +81,15 @@ class AdminWordController extends Controller
             'message' => 'Word created successfully! response time is ' . $time . ' seconds.',
         ]);
     }
+    
+    public function list(){
+        $wordTestList = WordTest::where('save_flag', 0)->get();
+        Log::info('wordTestList:', ["wordTestList"=>$wordTestList]);
+
+        return response()->json([
+            'wordTestList' => $wordTestList,
+        ]);
+    }
         
     public function save(){
         //wordTestListのsave_flagが0である英単語を取得
@@ -102,6 +111,15 @@ class AdminWordController extends Controller
         }
         return response()->json([
             'message' => 'Word saved successfully!',
+        ]);
+    }
+
+    public function count(){
+        $wordCount = Word::whereNotNull('parse')->count();
+        Log::info('wordCount:', ["wordCount"=>$wordCount]);
+
+        return response()->json([
+            'wordCount' => $wordCount,
         ]);
     }
 }

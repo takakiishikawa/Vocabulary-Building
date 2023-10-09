@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 
 interface WordData {
     id: number;
@@ -13,8 +13,17 @@ const Word: React.FC = () => {
     const [wordTestList, setWordTestList] = useState<WordData[]>([]);
     console.log("wordTestList", wordTestList);
 
+    useEffect(() => {
+        fetch("http://127.0.0.1:8000/api/word/list")
+            .then((res) => res.json())
+            .then((data) => {
+                console.log("wordTestList", data.wordTestList);
+                setWordTestList(data.wordTestList);
+            });
+    }, []);
+
     const fetchWord = () => {
-        fetch("http://127.0.0.1:8000/api/word")
+        fetch("http://127.0.0.1:8000/api/word/generate")
             .then((res) => res.json())
             .then((data) => {
                 setWordTestList(data.wordTestList);

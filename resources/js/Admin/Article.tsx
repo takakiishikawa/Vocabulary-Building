@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 
 interface ArticleDate {
     id: number;
@@ -13,8 +13,16 @@ interface ArticleDate {
 const ArticleList: React.FC = () => {
     const [articleList, setArticleList] = useState<ArticleDate[]>([]);
 
+    useEffect(() => {
+        fetch("http://127.0.0.1:8000/api/article/list")
+            .then((res) => res.json())
+            .then((data) => {
+                setArticleList(data.articleTestGenerate);
+            });
+    }, []);
+
     const fetchArticleList = () => {
-        fetch("http://127.0.0.1:8000/api/article")
+        fetch("http://127.0.0.1:8000/api/article/generate")
             .then((res) => res.json())
             .then((data) => {
                 console.log(data);

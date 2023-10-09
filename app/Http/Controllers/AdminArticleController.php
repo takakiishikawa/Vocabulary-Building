@@ -14,7 +14,7 @@ use App\Models\ArticleTestGenerate;
 
 class AdminArticleController extends Controller
 {
-    public function index()
+    public function generate()
     {
         //記事の生成
         $start_time = microtime(true);
@@ -22,7 +22,7 @@ class AdminArticleController extends Controller
         // ArticleTestWordGroupingに保存する
         $groupCounter = 1;
         $wordCount = 50;
-        $groupCount = 2;
+        $groupCount = 1;
         $totalCount = $wordCount * $groupCount;
         $wordList = Word::whereNull('generated_id')->orderBy('id', 'asc')->take($totalCount)->pluck('name')->toArray();
         Log::info('wordList:', ["wordList"=>$wordList]);
@@ -52,11 +52,11 @@ class AdminArticleController extends Controller
         Log::info('articleTestWordGroupingGroupBy:', ["articleTestWordGroupingGroupBy"=>$articleTestWordGroupingGroupBy]);
         $articleTestWordGroupingGroupByArray = $articleTestWordGroupingGroupBy->toArray();
         Log::info('articleTestWordGroupingGroupByArray:', ["articleTestWordGroupingGroupByArray"=>$articleTestWordGroupingGroupByArray]);
-
-        $selectedGrammar = Grammar::inRandomOrder()->first()->name;
-        $selectedTechnology = Technology::inRandomOrder()->first()->name;
         
         foreach($articleTestWordGroupingGroupByArray as $n){
+            $selectedGrammar = Grammar::inRandomOrder()->first()->name;
+            $selectedTechnology = Technology::inRandomOrder()->first()->name;
+            
             Log::info('n:', ["n"=>$n]);
             //articleTestWordGroupingGroupByArrayのname50個を取得してプロンプトにWordListとして入れる
             $wordList = array_column($n, 'name');
@@ -80,7 +80,7 @@ class AdminArticleController extends Controller
             $response = Http::withHeaders([
                 'Content-Type' => 'application/json',
                 'Authorization' => 'Bearer ' . env('OPENAI_API_KEY')
-            ])->withOptions(['timeout' => 120])->post($url, [
+            ])->withOptions(['timeout' => 300])->post($url, [
                 'model' => 'gpt-4',
                 'messages' => [
                     ['role' => 'user', 'content' => $prompt]
@@ -173,7 +173,7 @@ class AdminArticleController extends Controller
             $response2 = Http::withHeaders([
                 'Content-Type' => 'application/json',
                 'Authorization' => 'Bearer ' . env('OPENAI_API_KEY')
-            ])->withOptions(['timeout' => 120])->post($url2, [
+            ])->withOptions(['timeout' => 300])->post($url2, [
                 'model' => 'gpt-4',
                 'messages' => [
                     ['role' => 'user', 'content' => $prompt2]
@@ -213,6 +213,14 @@ class AdminArticleController extends Controller
         ]);
     }
 
+    public function list(){
+        $articleTestGenerate = ArticleTestGenerate::where('save_flag', 0)->get();
+        Log::info('articleTestGenerate:', ["articleTestGenerate"=>$articleTestGenerate]);
+        return response()->json([
+            'articleTestGenerate' => $articleTestGenerate,
+        ]);
+    }
+
     public function save(){
         //articleTestGenerateのsave_flagが0であるレコードを全て取得
         $articleTestGenerateList = ArticleTestGenerate::where('save_flag', 0)->get();
@@ -236,5 +244,15 @@ class AdminArticleController extends Controller
         return response()->json([
             'message' => 'Article created successfully!'
         ]);
+    }
+
+    public function count(){
+        $articleCount = Article::count();
+        Log::info('articleCount:', ["articleCount"=>$articleCount]);
+        
+        return response()->json([
+            'articleCount' => $articleCount,
+        ]);
+
     }
 }

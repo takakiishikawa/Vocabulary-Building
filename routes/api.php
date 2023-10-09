@@ -22,12 +22,18 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 });
 
 //admin article
-Route::get('/article',[AdminArticleController::class,'index']);
+Route::get('/article/generate',[AdminArticleController::class,'generate']);
+Route::get('/article/list',[AdminArticleController::class,'list']);
 Route::post('/article/save',[AdminArticleController::class,'save']);
+Route::get('/article/count',[AdminArticleController::class,'count']);
+
 
 //admin word
-Route::get('/word',[AdminWordController::class,'index']);
+Route::get('/word/generate',[AdminWordController::class,'generate']);
+Route::get('/word/list',[AdminWordController::class,'list']);
 Route::post('/word/save',[AdminWordController::class,'save']);
+Route::get('/word/count',[AdminWordController::class,'count']);
+
 
 //admin technology
 Route::get('/technology',[AdminTechnologyController::class,'index']);
