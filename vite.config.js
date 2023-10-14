@@ -6,7 +6,7 @@ import sass from "vite-plugin-sass";
 export default defineConfig({
     plugins: [
         laravel({
-            input: ["resources/js/App.tsx"],
+            input: ["resources/js/Index.tsx"],
             refresh: true,
         }),
         react(),

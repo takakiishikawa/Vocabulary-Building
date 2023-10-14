@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from "react";
+import { useSelector } from "react-redux";
+import { selectTechnology } from "../TechnologySlice";
 
 interface TechnologyData {
     id: number;
@@ -7,6 +9,7 @@ interface TechnologyData {
 
 const Technology: React.FC = () => {
     const [technologyList, setTechnologyList] = useState<TechnologyData[]>([]);
+    const techonology = useSelector(selectTechnology);
 
     useEffect(() => {
         fetch("http://127.0.0.1:8000/api/technology")
